@@ -10,6 +10,7 @@ from clip_server.model.pretrained_models import get_model_url_md5, download_mode
 from clip_server.model.model import load_openai_model, load_openclip_model
 
 import torch
+import intel_extension_for_pytorch
 
 
 class OpenCLIPModel(CLIPModel):

@@ -2,6 +2,7 @@
 
 import transformers
 import torch
+import intel_extension_for_pytorch
 
 from clip_server.model.clip_model import CLIPModel
 from clip_server.model.openclip_model import OpenCLIPModel

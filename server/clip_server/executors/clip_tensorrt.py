@@ -21,7 +21,7 @@ class CLIPEncoder(Executor):
     def __init__(
         self,
         name: str = 'ViT-B-32::openai',
-        device: str = 'cuda',
+        device: str = 'xpu',
         num_worker_preprocess: int = 4,
         minibatch_size: int = 32,
         access_paths: str = '@r',
@@ -30,7 +30,7 @@ class CLIPEncoder(Executor):
         """
         :param name: The name of the model to be used. Default 'ViT-B-32::openai'. A list of available models can be
             found at https://clip-as-service.jina.ai/user-guides/server/#model-support
-        :param device: 'cpu' or 'cuda'. Default is 'cuda' since TensorRT is only supported on CUDA.
+        :param device: 'cpu' or 'xpu'. Default is 'xpu' since TensorRT is only supported on CUDA.
         :param num_worker_preprocess: The number of CPU workers to preprocess images and texts. Default is 4.
         :param minibatch_size: The size of the minibatch for preprocessing and encoding. Default is 32. Reduce this
             number if you encounter OOM errors.
@@ -53,14 +53,15 @@ class CLIPEncoder(Executor):
         self._device = device
 
         import torch
+import intel_extension_for_pytorch
 
-        assert self._device.startswith('cuda'), (
+        assert self._device.startswith('xpu'), (
             f'can not perform inference on {self._device}'
             f' with Nvidia TensorRT as backend'
         )
 
         assert (
-            torch.cuda.is_available()
+            torch.xpu.is_available()
         ), "CUDA/GPU is not available on Pytorch. Please check your CUDA installation"
 
         self._model = CLIPTensorRTModel(name)

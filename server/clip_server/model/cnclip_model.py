@@ -1,6 +1,7 @@
 # Originally from https://github.com/OFA-Sys/Chinese-CLIP. MIT License.
 
 import torch
+import intel_extension_for_pytorch
 
 from clip_server.model.clip_model import CLIPModel
 from clip_server.model.pretrained_models import _VISUAL_MODEL_IMAGE_SIZE

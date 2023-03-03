@@ -1,5 +1,7 @@
 import torch
+import intel_extension_for_pytorch
 import torch.nn as nn
+import intel_extension_for_pytorch
 from torch import Tensor
 from typing import Optional, Tuple
 

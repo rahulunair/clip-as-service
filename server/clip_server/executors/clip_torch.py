@@ -6,6 +6,7 @@ from typing import Dict, Union, Optional
 
 import numpy as np
 import torch
+import intel_extension_for_pytorch
 from clip_server.executors.helper import (
     preproc_image,
     preproc_text,
@@ -35,7 +36,7 @@ class CLIPEncoder(Executor):
         """
         :param name: The name of the model to be used. Default 'ViT-B-32::openai'. A list of available models can be
             found at https://clip-as-service.jina.ai/user-guides/server/#model-support
-        :param device: 'cpu' or 'cuda'. Default is None, which auto-detects the device.
+        :param device: 'cpu' or 'xpu'. Default is None, which auto-detects the device.
         :param jit: Whether to use JIT compilation. Default is False.
         :param num_worker_preprocess: The number of CPU workers to preprocess images and texts. Default is 4.
         :param minibatch_size: The size of the minibatch for preprocessing and encoding. Default is 32. Reduce this
@@ -55,7 +56,7 @@ class CLIPEncoder(Executor):
             self._access_paths = kwargs['traversal_paths']
 
         if not device:
-            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            device = 'xpu' if torch.xpu.is_available() else 'cpu'
         self._device = device
         if isinstance(dtype, str):
             dtype = __cast_dtype__.get(dtype)
@@ -67,7 +68,7 @@ class CLIPEncoder(Executor):
             )
         self._dtype = dtype
 
-        if not self._device.startswith('cuda') and (
+        if not self._device.startswith('xpu') and (
             'OMP_NUM_THREADS' not in os.environ
             and hasattr(self.runtime_args, 'replicas')
         ):

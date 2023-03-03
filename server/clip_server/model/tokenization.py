@@ -1,4 +1,5 @@
 import torch
+import intel_extension_for_pytorch
 from typing import List, Union
 from clip_server.model.pretrained_models import (
     _MULTILINGUALCLIP_MODELS,

@@ -3,6 +3,7 @@ import os
 import sys
 import threading
 import torch
+import intel_extension_for_pytorch
 from packaging.version import Version
 from urllib.request import Request, urlopen
 

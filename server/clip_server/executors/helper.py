@@ -1,5 +1,6 @@
 from typing import Tuple, List, Callable, Any, Dict, Union
 import torch
+import intel_extension_for_pytorch
 import numpy as np
 from docarray import Document, DocumentArray
 from docarray.math.distance.numpy import cosine

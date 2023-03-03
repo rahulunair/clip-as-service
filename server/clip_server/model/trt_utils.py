@@ -5,6 +5,7 @@ from typing import Callable, Dict, List, OrderedDict, Tuple
 
 import tensorrt as trt
 import torch
+import intel_extension_for_pytorch
 from tensorrt import ICudaEngine, IExecutionContext
 from tensorrt.tensorrt import (
     Builder,
@@ -121,7 +122,7 @@ def build_engine(
                 trt_engine = builder.build_serialized_network(
                     network_definition, config
                 )
-                engine: ICudaEngine = runtime.deserialize_cuda_engine(trt_engine)
+                engine: ICudaEngine = runtime.deserialize_xpu_engine(trt_engine)
                 assert (
                     engine is not None
                 ), "error during engine generation, check error messages above :-("
@@ -151,7 +152,7 @@ def get_output_tensors(
         # TensorRT computes output shape based on input shape provided above
         output_shape = context.get_binding_shape(binding_index)
         # allocate buffers to hold output results
-        output = torch.empty(tuple(output_shape), device="cuda")
+        output = torch.empty(tuple(output_shape), device="xpu")
         device_outputs.append(output)
     return device_outputs
 
@@ -179,7 +180,7 @@ def infer_tensorrt(
         if tensor.dtype == torch.int64:
             # warning: small changes in output if int64 is used instead of int32
             tensor = tensor.type(torch.int32)
-            # tensor = tensor.to("cuda")
+            # tensor = tensor.to("xpu")
         input_tensors.append(tensor)
     # calculate input shape, bind it, allocate GPU memory for the output
     output_tensors: List[torch.Tensor] = get_output_tensors(
@@ -187,9 +188,9 @@ def infer_tensorrt(
     )
     bindings = [int(i.data_ptr()) for i in input_tensors + output_tensors]
     assert context.execute_async_v2(
-        bindings, torch.cuda.current_stream().cuda_stream
+        bindings, torch.xpu.current_stream().xpu_stream
     ), "failure during execution of inference"
-    torch.cuda.current_stream().synchronize()  # sync all CUDA ops
+    torch.xpu.current_stream().synchronize()  # sync all CUDA ops
     return output_tensors
 
 
@@ -204,8 +205,8 @@ def load_engine(
     :return: A function to perform inference
     """
     with open(file=engine_file_path, mode="rb") as f:
-        engine: ICudaEngine = runtime.deserialize_cuda_engine(f.read())
-        stream: int = torch.cuda.current_stream().cuda_stream
+        engine: ICudaEngine = runtime.deserialize_xpu_engine(f.read())
+        stream: int = torch.xpu.current_stream().xpu_stream
         context: IExecutionContext = engine.create_execution_context()
         context.set_optimization_profile_async(
             profile_index=profile_index, stream_handle=stream

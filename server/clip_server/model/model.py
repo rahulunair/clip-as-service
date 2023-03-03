@@ -10,6 +10,7 @@ Ludwig Schmidt
 
 import warnings
 import torch
+import intel_extension_for_pytorch
 import numpy as np
 from torch import nn
 from dataclasses import dataclass
@@ -55,7 +56,7 @@ class ResidualAttentionBlock(_ResidualAttentionBlock):
         self.attn = (
             MultiheadAttention(width, heads)
             if FLASH_ATTENTION_AVAILABLE
-            and torch.cuda.is_available()
+            and torch.xpu.is_available()
             and dtype in (torch.float16, torch.bfloat16)
             and flash_attention
             else nn.MultiheadAttention(width, heads)
@@ -429,7 +430,7 @@ def build_model_from_openai_state_dict(
 
 def load_openai_model(
     model_path: str,
-    device: Union[str, torch.device] = 'cuda' if torch.cuda.is_available() else 'cpu',
+    device: Union[str, torch.device] = 'xpu' if torch.xpu.is_available() else 'cpu',
     dtype: Optional[Union[str, torch.dtype]] = None,
     jit: bool = True,
 ):
@@ -514,7 +515,7 @@ def load_openai_model(
         for graph in graphs:
             for node in graph.findAllNodes("prim::Constant"):
                 if "value" in node.attributeNames() and str(node["value"]).startswith(
-                    "cuda"
+                    "xpu"
                 ):
                     node.copyAttributes(device_node)
 

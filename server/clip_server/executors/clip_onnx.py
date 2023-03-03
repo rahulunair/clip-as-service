@@ -33,7 +33,7 @@ class CLIPEncoder(Executor):
         """
         :param name: The name of the model to be used. Default 'ViT-B-32::openai'. A list of available models can be
             found at https://clip-as-service.jina.ai/user-guides/server/#model-support
-        :param device: 'cpu' or 'cuda'. Default is None, which auto-detects the device.
+        :param device: 'cpu' or 'xpu'. Default is None, which auto-detects the device.
         :param num_worker_preprocess: The number of CPU workers to preprocess images and texts. Default is 4.
         :param minibatch_size: The size of the minibatch for preprocessing and encoding. Default is 32. Reduce this
             number if you encounter OOM errors.
@@ -46,9 +46,10 @@ class CLIPEncoder(Executor):
         """
         super().__init__(**kwargs)
         import torch
+import intel_extension_for_pytorch
 
         if not device:
-            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            device = 'xpu' if torch.xpu.is_available() else 'cpu'
         self._device = device
         if not dtype:
             dtype = 'fp32' if self._device in ('cpu', torch.device('cpu')) else 'fp16'
@@ -74,7 +75,7 @@ class CLIPEncoder(Executor):
         providers = ['CPUExecutionProvider']
 
         # prefer CUDA Execution Provider over CPU Execution Provider
-        if self._device.startswith('cuda'):
+        if self._device.startswith('xpu'):
             providers.insert(0, 'CUDAExecutionProvider')
 
         sess_options = ort.SessionOptions()
@@ -84,7 +85,7 @@ class CLIPEncoder(Executor):
             ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         )
 
-        if not self._device.startswith('cuda') and (
+        if not self._device.startswith('xpu') and (
             'OMP_NUM_THREADS' not in os.environ
             and hasattr(self.runtime_args, 'replicas')
         ):
